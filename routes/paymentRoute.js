@@ -1,0 +1,43 @@
+import express from "express";
+import paymentController from "../controllers/paymentController.js"
+const router = express.Router();
+
+// RTI Payment Routes
+
+// Create Razorpay order
+router.post('/rti/create-order',paymentController.rtiCreateOrder);
+
+// Verify payment 
+router.post('/rti/verify-payment', paymentController.rtiVerifyPayment);
+
+// Get payment history
+router.get('/rti/payment-history',  paymentController.rtiGetPaymentHistory); 
+
+
+// Audit Crash Course Routes
+
+// Create Razorpay order
+router.post('/audit-crash-course/create-order',paymentController.auditCourseCreateOrder);
+
+// Verify payment 
+router.post('/audit-crash-course/verify-payment',paymentController.auditCourseVerifyPayment);
+
+// Get payment history
+router.get('/audit-crash-course/payment-history',paymentController.auditCourseGetPaymentHistory); 
+
+
+
+
+
+// Audit Crash Course Routes
+
+// Create Razorpay order
+router.post('/planner/create-order',paymentController.plannerKitCreateOrder);
+
+// Verify payment 
+router.post('/planner/verify-payment',paymentController.plannerKitVerifyPayment);
+
+// Get payment history
+router.get('/planner/payment-history',paymentController.plannerKitVerifyPayment); 
+
+export default router
