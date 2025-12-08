@@ -7,7 +7,7 @@ import paymentRoute from "./routes/paymentRoute.js"
 dotenv.config()
 connectDB()
 
-const PORT=process.env.PORT || 7777
+const PORT=process.env.PORT || 4000
 const app=express()
 app.use(express())
 app.use(cookieParser());
