@@ -19,6 +19,7 @@ app.use(cors({
     'http://127.0.0.1:5174',
     'http://localhost:5174',
     'https://kit.focasedu.com',
+    'https://kit.focasedu.com',
     'http://127.0.0.1:5173'
   ],
   credentials: true
