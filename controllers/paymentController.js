@@ -243,7 +243,6 @@ const auditCourseCreateOrder = async (req, res) => {
       sro,
       caLevel,
       previousAttempt,
-      rtiLink,
       locationOfResidence,
       courseName,
     } = req.body;
@@ -291,7 +290,6 @@ if (!amount) {
         sro,
         caLevel,
         previousAttempt,
-        rtiLink,
         locationOfResidence,
         courseName,
       },
