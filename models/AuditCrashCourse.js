@@ -14,7 +14,6 @@ const AuditCrashCourseSchema = new mongoose.Schema(
     },
 
     previousAttempt: { type: String },
-    rtiLink: { type: String, trim: true },
     locationOfResidence: { type: String, trim: true },
 
     courseName: {
