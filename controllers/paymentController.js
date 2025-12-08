@@ -18,9 +18,9 @@ const razorpay = new Razorpay({
 // CREATE ORDER
 
 const RTI_PRICES = {
-  PER_PAPER: 199,
-  PER_GROUP: 499,
-  BOTH_GROUPS: 799,
+  PER_PAPER: 350,
+  PER_GROUP: 800,
+  BOTH_GROUPS: 1500,
 };
 
 // =============================
@@ -230,8 +230,8 @@ GET /api/rti/payment-history?page=2&limit=10 */
 // CREATE ORDER
 // Backend-only secure pricing
 const COURSE_PRICES = {
-  AUDIT_CRASH_COURSE: 3500,
-  NORMAL_COURSE: 3500,
+  AUDIT_CRASH_COURSE: 4000,
+  NORMAL_COURSE: 4000,
 };
 
 const auditCourseCreateOrder = async (req, res) => {
