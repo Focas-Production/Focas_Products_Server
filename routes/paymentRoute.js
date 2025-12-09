@@ -1,5 +1,7 @@
 import express from "express";
 import paymentController from "../controllers/paymentController.js"
+import { protect, requireRoles } from '../middlewares/authMiddleware.js';
+
 const router = express.Router();
 
 // RTI Payment Routes
@@ -11,7 +13,7 @@ router.post('/rti/create-order',paymentController.rtiCreateOrder);
 router.post('/rti/verify-payment', paymentController.rtiVerifyPayment);
 
 // Get payment history
-router.get('/rti/payment-history',  paymentController.rtiGetPaymentHistory); 
+router.get('/rti/payment-history',protect, requireRoles('admin', 'superadmin'),  paymentController.rtiGetPaymentHistory); 
 
 
 // Audit Crash Course Routes
@@ -23,7 +25,7 @@ router.post('/audit-crash-course/create-order',paymentController.auditCourseCrea
 router.post('/audit-crash-course/verify-payment',paymentController.auditCourseVerifyPayment);
 
 // Get payment history
-router.get('/audit-crash-course/payment-history',paymentController.auditCourseGetPaymentHistory); 
+router.get('/audit-crash-course/payment-history',protect, requireRoles('admin', 'superadmin'),paymentController.auditCourseGetPaymentHistory); 
 
 
 
@@ -38,6 +40,6 @@ router.post('/planner/create-order',paymentController.plannerKitCreateOrder);
 router.post('/planner/verify-payment',paymentController.plannerKitVerifyPayment);
 
 // Get payment history
-router.get('/planner/payment-history',paymentController.plannerKitVerifyPayment); 
+router.get('/planner/payment-history',protect, requireRoles('admin', 'superadmin'),paymentController.plannerKitGetOrders); 
 
 export default router
