@@ -160,6 +160,7 @@ const rtiGetPaymentHistory = async (req, res) => {
       paymentOption,
       startDate,
       endDate,
+      status,
       page = 1,
       limit = 20,
     } = req.query;
@@ -175,6 +176,9 @@ const rtiGetPaymentHistory = async (req, res) => {
     if (phoneNumber) filter.phoneNumber = { $regex: phoneNumber, $options: "i" };
     if (orderId) filter.razorpayOrderId = orderId;
     if (paymentOption) filter.paymentOption = paymentOption;
+
+      // ⭐ OPTIONAL STATUS FILTER
+    if (status) filter.status = status;
 
     // 📅 Date range
     if (startDate || endDate) {
@@ -207,6 +211,38 @@ const rtiGetPaymentHistory = async (req, res) => {
       success: false,
       error: "Failed to fetch payment history",
     });
+  }
+};
+
+const updateRtiStatus = async (req, res) => {
+  const id = req.params.id;
+  const { status, notes } = req.body;
+
+  try {
+    // Fetch old record
+    const oldData = await RTI.findById(id);
+    if (!oldData) {
+      return res.status(404).json({ message: "Rti not found" });
+    }
+
+    // Use old values if new ones are NOT provided
+    const updatedData = await RTI.findByIdAndUpdate(
+      id,
+      {
+        status: status ?? oldData.status,
+        notes: notes ?? oldData.notes
+      },
+      { new: true }
+    );
+
+    return res.status(200).json({
+      message: "Rti status updated successfully",
+      data: updatedData,
+    });
+
+  } catch (error) {
+    console.error("Error updating Rti:", error);
+    res.status(500).json({ message: "Server error", error });
   }
 };
 
@@ -529,6 +565,7 @@ const plannerKitGetOrders = async (req, res) => {
       caLevel,
       startDate,
       endDate,
+      status,
       page = 1,
       limit = 20,
     } = req.query;
@@ -544,6 +581,9 @@ const plannerKitGetOrders = async (req, res) => {
     if (title) filter.title = title;
     if (attempt) filter.attempt = attempt;
     if (caLevel) filter.caLevel = caLevel;
+
+       // ⭐ OPTIONAL STATUS FILTER
+    if (status) filter.status = status;
 
     if (startDate || endDate) {
       filter.createdAt = {};
@@ -576,17 +616,49 @@ const plannerKitGetOrders = async (req, res) => {
   }
 };
 
+const updatePlannerKitStatus = async (req, res) => {
+  const id = req.params.id;
+  const { status, notes } = req.body;
 
+  try {
+    // Fetch old record
+    const oldData = await PlannerKit.findById(id);
+    if (!oldData) {
+      return res.status(404).json({ message: "PlannerKit not found" });
+    }
+
+    // Use old values if new ones are NOT provided
+    const updatedData = await PlannerKit.findByIdAndUpdate(
+      id,
+      {
+        status: status ?? oldData.status,
+        notes: notes ?? oldData.notes
+      },
+      { new: true }
+    );
+
+    return res.status(200).json({
+      message: "Planner status updated successfully",
+      data: updatedData,
+    });
+
+  } catch (error) {
+    console.error("Error updating plannerKit:", error);
+    res.status(500).json({ message: "Server error", error });
+  }
+};
 
 
 export default {
   rtiCreateOrder,
   rtiVerifyPayment,
   rtiGetPaymentHistory,
+  updateRtiStatus,
   auditCourseCreateOrder,
   auditCourseVerifyPayment,
   auditCourseGetPaymentHistory,
   plannerKitCreateOrder,
   plannerKitVerifyPayment,
-  plannerKitGetOrders
+  plannerKitGetOrders,
+  updatePlannerKitStatus
 };

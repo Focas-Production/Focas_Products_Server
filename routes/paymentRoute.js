@@ -15,6 +15,8 @@ router.post('/rti/verify-payment', paymentController.rtiVerifyPayment);
 // Get payment history
 router.get('/rti/payment-history',protect, requireRoles('admin', 'superadmin'),  paymentController.rtiGetPaymentHistory); 
 
+router.put('/rti/status/:id',protect, requireRoles('admin', 'superadmin'),paymentController.updateRtiStatus);
+
 
 // Audit Crash Course Routes
 
@@ -41,5 +43,9 @@ router.post('/planner/verify-payment',paymentController.plannerKitVerifyPayment)
 
 // Get payment history
 router.get('/planner/payment-history',protect, requireRoles('admin', 'superadmin'),paymentController.plannerKitGetOrders); 
+
+// Edit Planner status and notes
+
+router.put('/planner/status/:id',protect, requireRoles('admin', 'superadmin'),paymentController.updatePlannerKitStatus);
 
 export default router

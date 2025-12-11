@@ -29,6 +29,14 @@ const CAStudentRTISchema = new mongoose.Schema(
 
     amount: { type: Number, required: true },
     currency: { type: String, default: "INR" },
+       status:{
+      type:String,
+      enum:["PENDING","PROCESSING","FINISHED","DELIVERED","SHIPPED","CANCELLED","RETURNED"],
+      default:"PROCESSING"
+    },
+    notes:{
+      type:String,
+    }
   },
   { timestamps: true }
 );

@@ -40,6 +40,14 @@ const PlannerKitSchema = new mongoose.Schema(
     razorpaySignature: { type: String, default: null },
     amount: { type: Number, default: null },
     currency: { type: String, default: "INR" },
+    status:{
+      type:String,
+      enum:["PENDING","PROCESSING","DELIVERED","SHIPPED","CANCELLED","RETURNED"],
+      default:"PROCESSING"
+    },
+    notes:{
+      type:String,
+    }
   },
   { timestamps: true }
 );
