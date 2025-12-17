@@ -5,6 +5,7 @@ import cors from "cors"
 import connectDB from "./config/connectDB.js"
 import paymentRoute from "./routes/paymentRoute.js"
 import authRoutes from './routes/authRoutes.js';
+import whatsappRoutes from "./routes/whatsappRoutes.js"
 dotenv.config()
 connectDB()
 
@@ -32,6 +33,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/payment', paymentRoute)
+app.use('/api/whatsapp',whatsappRoutes)
 
 
 // Health check endpoint
