@@ -266,7 +266,7 @@ GET /api/rti/payment-history?page=2&limit=10 */
 // CREATE ORDER
 // Backend-only secure pricing
 const COURSE_PRICES = {
-  AUDIT_CRASH_COURSE: 1,
+  AUDIT_CRASH_COURSE: 4000,
   NORMAL_COURSE: 4000,
 };
 
