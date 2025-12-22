@@ -31,8 +31,9 @@ const PlannerKitSchema = new mongoose.Schema(
 
     caLevel: {
       type: String,
-      enum: ["CA Foundation", "CA Intermediate", "CA Final"],
+      enum: ["CA Foundation", "CA Intermediate", "CA Final","N/A"],
       required: true,
+      default: "N/A"
     },
 
     razorpayOrderId: { type: String, default: null },
