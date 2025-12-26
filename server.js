@@ -6,6 +6,7 @@ import connectDB from "./config/connectDB.js"
 import paymentRoute from "./routes/paymentRoute.js"
 import authRoutes from './routes/authRoutes.js';
 import whatsappRoutes from "./routes/whatsappRoutes.js"
+import gameLeadRoutes from "./routes/gameLeadRoutes.js"
 dotenv.config()
 connectDB()
 
@@ -21,6 +22,9 @@ app.use(cors({
     'http://127.0.0.1:5174',
     'http://localhost:5174',
     'http://localhost:5175',
+    'http://localhost:8080',
+    'https://game.focasedu.in',
+    'http://game.focasedu.in',
     'https://kit.focasedu.com',
     'https://focasedu.com',
     'https://focasedu.netlify.app',
@@ -34,12 +38,13 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/payment', paymentRoute)
 app.use('/api/whatsapp',whatsappRoutes)
+app.use("/api/gamesession",gameLeadRoutes);
 
 
 // Health check endpoint
 app.get("/", (_req, res) => {
   res.json({ 
-    message: "Focas Ad Server API is running...",
+    message: "Focas Ad Server API is running...1",
     status: "healthy",
     timestamp: new Date().toISOString()
   });
