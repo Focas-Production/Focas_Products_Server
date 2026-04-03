@@ -1,120 +1,142 @@
-import User from '../models/User.js';
-import bcrypt from 'bcrypt';
-import { generateToken } from '../utils/token.js';
+// controllers/authController.js
+import User from "../models/User.js"
+import { generateToken } from "../middleware/auth.js";
+import {generateOTP, sendOTP, sendEmailOTP} from "../services/otpService.js"
+import { normalizePhone } from "../services/accessService.js"
 
-const sanitizeUser = (user) => {
-if (!user) return null;
-const plain = user.toObject ? user.toObject() : user;
-delete plain.password;
-return plain;
+// Send OTP (for login/register)
+const sendOTPController = async (req, res) => {
+  try {
+    const { phoneNumber: rawPhone, email } = req.body;
+    const phoneNumber = normalizePhone(rawPhone);
+    const identifier = phoneNumber || email;
+
+    if (!identifier) {
+      return res.status(400).json({ error: 'Phone or email required' });
+    }
+
+    const isEmail = !!email;
+    const query = isEmail ? { email: email.toLowerCase() } : { phoneNumber };
+
+    // Find or create user
+    let user = await User.findOne(query);
+    if (!user) {
+      user = await User.create({
+        [isEmail ? 'email' : 'phoneNumber']: isEmail ? email.toLowerCase() : phoneNumber,
+        access: {
+          shopify: { courses: [], features: [] },
+          website: { courses: [], features: [] }
+        }
+      });
+    }
+
+    // Generate and save OTP
+    const otp = generateOTP();
+    user.otp = otp;
+    user.otpExpires = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+    await user.save();
+
+    // Send OTP
+    if (isEmail) {
+      await sendEmailOTP(email, otp);
+    } else {
+      await sendOTP(phoneNumber, otp);
+    }
+
+    res.json({ success: true, message: 'OTP sent' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
-export const login = async (req, res) => {
-try {
-const { phoneNumber, password } = req.body;
-if (!phoneNumber || !password)
-return res.status(400).json({ success: false, message: 'phoneNumber and password required' });
+// Verify OTP and login
+const verifyOTPController = async (req, res) => {
+  try {
+    const { phoneNumber: rawPhone, email, otp } = req.body;
+    const phoneNumber = normalizePhone(rawPhone);
+    const identifier = phoneNumber || email;
 
-const user = await User.findOne({ phoneNumber });
-if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    if (!identifier || !otp) {
+      return res.status(400).json({ error: 'Phone/email and OTP required' });
+    }
 
-const match = await bcrypt.compare(password, user.password);
-if (!match) return res.status(400).json({ success: false, message: 'Wrong password' });
+    const isEmail = !!email;
+    const query = isEmail ? { email: email.toLowerCase() } : { phoneNumber };
 
-if (!user.is_verified)
-return res.status(403).json({ success: false, message: 'User not verified' });
+    const user = await User.findOne(query);
 
-const token = generateToken(user);
-return res.json({ success: true, message: 'Login successful', user: sanitizeUser(user), token });
-} catch (error) {
-return res.status(500).json({ success: false, message: error.message });
-}
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check OTP
+    if (user.otp !== otp) {
+      return res.status(400).json({ error: 'Invalid OTP' });
+    }
+
+    // Check expiry
+    if (user.otpExpires < new Date()) {
+      return res.status(400).json({ error: 'OTP expired' });
+    }
+
+    // Clear OTP
+    user.otp = null;
+    user.otpExpires = null;
+    await user.save();
+
+    // Generate token
+    const token = generateToken(user._id);
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        name: user.name,
+        access: user.access
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
-
-export const createSuperAdmin = async (req, res) => {
-try {
-const { name, email, phoneNumber, password, city, caLevel } = req.body;
-if (!req.user || !['admin', 'superadmin'].includes(req.user.role))
-return res.status(403).json({ success: false, message: 'Forbidden' });
-
-const exists = await User.findOne({ $or: [{ phoneNumber }, { email }] });
-if (exists) return res.status(400).json({ success: false, message: 'User already exists' });
-
-const newUser = await User.create({
-name,
-email,
-phoneNumber,
-password,
-city,
-caLevel,
-role: 'superadmin',
-is_verified: true
-});
-
-return res.status(201).json({ success: true, message: 'Super admin created', user: sanitizeUser(newUser) });
-} catch (error) {
-return res.status(500).json({ success: false, message: error.message });
-}
+// Get current user
+const getMe = async (req, res) => {
+  res.json({
+    id: req.user._id,
+    email: req.user.email,
+    phoneNumber: req.user.phoneNumber,
+    name: req.user.name,
+    access: req.user.access
+  });
 };
 
+// Update profile
+const updateProfile = async (req, res) => {
+  try {
+    const { name, email, phoneNumber } = req.body;
 
-export const bootstrapSuperAdmin = async (req, res) => {
-try {
-const { setupKey, name, email, phoneNumber, password, city, caLevel } = req.body;
-// console.log(typeof(process.env.SUPERADMIN_SETUP_KEY) + process.env.SUPERADMIN_SETUP_KEY)
-// console.log(typeof(setupKey) + setupKey)
-// console.log(setupKey === process.env.SUPERADMIN_SETUP_KEY)
-if (!process.env.SUPERADMIN_SETUP_KEY)
-return res.status(500).json({ success: false, message: 'Setup key missing in environment' });
+    if (name) req.user.name = name;
+    if (email) req.user.email = email.toLowerCase();
+    if (phoneNumber) req.user.phoneNumber = phoneNumber;
 
-const existing = await User.findOne({ role: 'superadmin' });
-if (existing) return res.status(400).json({ success: false, message: 'Super admin already exists' });
+    await req.user.save();
 
-if (!setupKey || setupKey !== process.env.SUPERADMIN_SETUP_KEY)
-return res.status(403).json({ success: false, message: 'Invalid setup key' });
-
-const user = await User.create({
-name,
-email,
-phoneNumber,
-password,
-city,
-caLevel,
-role: 'superadmin',
-is_verified: true
-});
-
-const token = generateToken(user);
-return res.status(201).json({ success: true, message: 'Super admin bootstrapped', user: sanitizeUser(user), token });
-} catch (error) {
-return res.status(500).json({ success: false, message: error.message });
-}
+    res.json({
+      success: true,
+      user: {
+        id: req.user._id,
+        email: req.user.email,
+        phoneNumber: req.user.phoneNumber,
+        name: req.user.name
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
-
-export const createAdmin = async (req, res) => {
-try {
-const { name, email, phoneNumber, password, city, caLevel } = req.body;
-if (!req.user || req.user.role !== 'superadmin')
-return res.status(403).json({ success: false, message: 'Only super admins can create admins' });
-
-const exists = await User.findOne({ $or: [{ phoneNumber }, { email }] });
-if (exists) return res.status(400).json({ success: false, message: 'User already exists' });
-
-const newUser = await User.create({
-name,
-email,
-phoneNumber,
-password,
-city,
-caLevel,
-role: 'admin',
-is_verified: true
-});
-
-return res.status(201).json({ success: true, message: 'Admin created', user: sanitizeUser(newUser) });
-} catch (error) {
-return res.status(500).json({ success: false, message: error.message });
-}
-};
+export { sendOTPController, verifyOTPController, getMe, updateProfile }
