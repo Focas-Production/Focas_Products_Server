@@ -1,58 +1,63 @@
-// server.js
-import 'dotenv/config'
 import express from "express"
-import mongoose from "mongoose"
+import dotenv from "dotenv"
+import cookieParser from "cookie-parser"
 import cors from "cors"
-import authRoutes from "./routes/auth.js"
-import shopifyRoutes from "./routes/shopify.js"
-import purchaseRoutes from "./routes/purchase.js"
-import adminRoutes from "./routes/admin.js"
-import deliveryRoutes from "./routes/delivery.js"
+import connectDB from "./config/connectDB.js"
+import paymentRoute from "./routes/paymentRoute.js"
+import authRoutes from './routes/authRoutes.js';
+import whatsappRoutes from "./routes/whatsappRoutes.js"
+import gameLeadRoutes from "./routes/gameLeadRoutes.js"
+dotenv.config()
+connectDB()
 
-const app = express();
-
+const PORT=process.env.PORT || 4000
+const app=express()
+app.use(express())
+app.use(cookieParser());
 // Middleware
 app.use(cors({
   origin: [
-    "http://localhost:8080",
-    "http://localhost:3000",
-    "https://september-subphenoid-celia.ngrok-free.dev"
+    process.env.FRONTEND_URL,
+    'http://localhost:5173',
+    'http://127.0.0.1:5174',
+    'http://localhost:5174',
+    'http://localhost:5175',
+    'http://localhost:8080',
+    'https://game.focasedu.in',
+    'http://game.focasedu.in',
+    'https://kit.focasedu.com',
+    'https://focasedu.com',
+    'https://focasedu.netlify.app',
+    'http://127.0.0.1:5173'
   ],
-  methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
+
+app.use('/api/auth', authRoutes);
+app.use('/api/payment', paymentRoute)
+app.use('/api/whatsapp',whatsappRoutes)
+app.use("/api/gamesession",gameLeadRoutes);
 
 
-app.use('/api/shopify', shopifyRoutes);
-
-
-app.use(express.json());
-
-// Handle malformed JSON bodies (e.g. bad webhook payloads)
-app.use((err, _req, res, next) => {
-  if (err.type === 'entity.parse.failed') {
-    return res.status(400).json({ error: 'Invalid JSON body' });
-  }
-  next(err);
+// Health check endpoint
+app.get("/", (_req, res) => {
+  res.json({ 
+    message: "Focas Ad Server API is running...1",
+    status: "healthy",
+    timestamp: new Date().toISOString()
+  });
 });
 
-// Database
-mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/focas')
-  .then(() => {
-    console.log('✅ MongoDB Connected');
-  })
-  .catch(err => console.error('❌ MongoDB Error:', err));
+/* app.use('*', (req, res) => {
+  res.status(404).json({ error: 'Route not found' });
+}); */
 
-// Routes
-app.use('/api/auth', authRoutes);
 
-app.use('/api/purchase', purchaseRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/delivery', deliveryRoutes);
-
-// Health check
-app.get('/health', (req, res) => res.json({ status: 'ok HealtH' }));
-
-// Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Focas Ad Server running on port ${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`API Base URL: http://localhost:${PORT}/api`);
+  console.log(`Health Check: http://localhost:${PORT}`);
+});
